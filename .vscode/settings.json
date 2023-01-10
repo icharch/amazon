@@ -1,0 +1,13 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.pyc": true,
+        "**/__pycache__": true
+    },
+    "defaultInterpreterPath": "/Users/irminacharchuta/.local/share/virtualenvs/irminacharchuta-C2cQbPh7/bin/python",
+    "git.ignoreLimitWarning": true
+}
