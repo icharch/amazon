@@ -59,7 +59,7 @@ class CountryConfig:
     google_worksheet_name: str
     refresh_token: str
 
-configs = [CountryConfig(Marketplaces.UK, const.GOOGLE_WORKSHEET_NAME_UK, const.REFRESH_TOKEN_UK), CountryConfig(Marketplaces.DE, const.GOOGLE_WORKSHEET_NAME_DE, const.REFRESH_TOKEN_DE)]
+configs = [CountryConfig(Marketplaces.UK, const.GOOGLE_WORKSHEET_NAME_UK, const.REFRESH_TOKEN_UK), CountryConfig(Marketplaces.DE, const.GOOGLE_WORKSHEET_NAME_DE, const.REFRESH_TOKEN_DE), CountryConfig(Marketplaces.FR, const.GOOGLE_WORKSHEET_NAME_FR, const.REFRESH_TOKEN_FR), CountryConfig(Marketplaces.IT, const.GOOGLE_WORKSHEET_NAME_IT, const.REFRESH_TOKEN_IT), CountryConfig(Marketplaces.ES, const.GOOGLE_WORKSHEET_NAME_ES, const.REFRESH_TOKEN_ES), CountryConfig(Marketplaces.NL, const.GOOGLE_WORKSHEET_NAME_NL, const.REFRESH_TOKEN_NL)]
 
 class AmazonScript:
     def __init__(self):
@@ -92,7 +92,7 @@ class AmazonScript:
 
         res = Orders(credentials=client_config, marketplace=config.marketplace)
         print("Fetching orders from " + str(config.marketplace))
-        orders = res.get_orders(CreatedAfter='2023-01-09', CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
+        orders = res.get_orders(CreatedAfter='2023-01-10', CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
         print("Fetched " + str(len(orders)) + " orders.") 
         order_items_to_sheet = []
         for order in orders:
