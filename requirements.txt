@@ -1,4 +1,4 @@
-dotenv 
+python-dotenv 
 python-amazon-sp-api
 gspread
 google-api-python-client
