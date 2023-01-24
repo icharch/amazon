@@ -12,14 +12,6 @@ on:
         - info
         - warning
         - debug
-      tags:
-        description: 'Test scenario tags'
-        required: false
-        type: boolean
-      environment:
-        description: 'Environment to run tests against'
-        type: environment
-        required: false
 
 jobs:
   build:
@@ -45,16 +37,3 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
         run: python script.py
-          
-      - name: commit files
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -A
-          git commit -m "update data" -a
-          
-      - name: push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
