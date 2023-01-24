@@ -141,7 +141,7 @@ class AmazonScript:
 
         res = Orders(credentials=client_config, marketplace=config.marketplace)
         print("Fetching orders from " + str(config.marketplace))
-        orders = res.get_orders(CreatedAfter='2023-01-21', CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
+        orders = res.get_orders(CreatedAfter=date.today()-timedelta(days=2), CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
         print("Fetched " + str(len(orders)) + " orders.") 
         order_items_to_sheet = []
         for order in orders:
