@@ -22,7 +22,7 @@ class GoogleSheets:
     def _get_sheet_object(self) -> gspread.Spreadsheet:
         client = gspread.authorize(self.credentials)
         print("-----" + "CREATING GOOGLE SHEET FILE" + "-----")
-        sheet_object = client.create(title= "YY_amazon_orders_" + str((date.today() - timedelta(days=1)).strftime('%Y-%m-%d')), folder_id='1Nye0kB64z7Jt1bdgWbCv6lv_TfdcxurN')
+        sheet_object = client.create(title= "YY_amazon_orders_" + str((date.today() - timedelta(days=1)).strftime('%Y-%m-%d')), folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
         return sheet_object
 
     def add_worksheet(self, name: str, index: int) -> gspread.Worksheet:
