@@ -13,7 +13,7 @@ on:
         - warning
         - debug
   schedule:
-    - cron: '55 15 * * *' # runs at 06:00 UTC everyday
+    - cron: '10 16 * * *' # runs at 06:00 UTC everyday
 
 jobs:
   build:
