@@ -27,7 +27,7 @@ class GoogleSheets:
         return sheet_object
 
     def add_worksheet(self, name: str, index: int) -> gspread.Worksheet:
-        worksheet = self.sheet_object.add_worksheet(title=name, rows=300, cols=10, index=index)
+        worksheet = self.sheet_object.add_worksheet(title=name, rows=400, cols=10, index=index)
         print("-----" + "Adding worksheet named " + name + "-----")
         self.write_header_if_doesnt_exist(worksheet=worksheet, columns=HEADER)
         return worksheet
@@ -165,7 +165,7 @@ class AmazonScript:
                         order_item=order_item
                     ))
                 print("Applying delay by 1 sec")
-                time.sleep(float(1))
+                time.sleep(float(1.5))
             else:
                 print("ERROR occured!!!")
                 break
