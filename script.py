@@ -22,7 +22,8 @@ class GoogleSheets:
     def _get_sheet_object(self) -> gspread.Spreadsheet:
         client = gspread.authorize(self.credentials)
         print("-----" + "CREATING GOOGLE SHEET FILE" + "-----")
-        sheet_object = client.create(title= "YY_amazon_orders_" + str((date.today() - timedelta(days=1)).strftime('%Y-%m-%d')), folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
+       # sheet_object = client.create(title= "YY_amazon_orders_" + str((date.today() - timedelta(days=1)).strftime('%Y-%m-%d')), folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
+        sheet_object = client.create(title= "YY_amazon_orders_2023_01_01", folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
         return sheet_object
 
     def add_worksheet(self, name: str, index: int) -> gspread.Worksheet:
@@ -98,6 +99,8 @@ class CountryConfig:
     refresh_token: str
 
 configs = [
+    CountryConfig(Marketplaces.BE, const.GOOGLE_WORKSHEET_NAME_BE, const.REFRESH_TOKEN_BE),
+    CountryConfig(Marketplaces.SE, const.GOOGLE_WORKSHEET_NAME_SE, const.REFRESH_TOKEN_SE),
     CountryConfig(Marketplaces.NL, const.GOOGLE_WORKSHEET_NAME_NL, const.REFRESH_TOKEN_NL),
     CountryConfig(Marketplaces.ES, const.GOOGLE_WORKSHEET_NAME_ES, const.REFRESH_TOKEN_ES), 
     CountryConfig(Marketplaces.IT, const.GOOGLE_WORKSHEET_NAME_IT, const.REFRESH_TOKEN_IT),
@@ -141,7 +144,8 @@ class AmazonScript:
 
         res = Orders(credentials=client_config, marketplace=config.marketplace)
         print("Fetching orders from " + str(config.marketplace))
-        orders = res.get_orders(CreatedAfter=date.today()-timedelta(days=2), CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
+        #orders = res.get_orders(CreatedAfter=date.today()-timedelta(days=2), CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
+        orders = res.get_orders(CreatedAfter='2022-12-31', CreatedBefore='2023-01-02').payload.get("Orders", '')
         print("Fetched " + str(len(orders)) + " orders.") 
         order_items_to_sheet = []
         for order in orders:
@@ -161,7 +165,7 @@ class AmazonScript:
                         order_item=order_item
                     ))
                 print("Applying delay by 1 sec")
-                time.sleep(float(1))
+                time.sleep(float(2))
             else:
                 print("ERROR occured!!!")
                 break
