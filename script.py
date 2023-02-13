@@ -165,7 +165,7 @@ class AmazonScript:
                         order_item=order_item
                     ))
                 print("Applying delay by 1 sec")
-                time.sleep(float(2))
+                time.sleep(float(1))
             else:
                 print("ERROR occured!!!")
                 break
