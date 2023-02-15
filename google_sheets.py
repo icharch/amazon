@@ -33,7 +33,7 @@ class GoogleSheets:
     def _create_sheet_file(self) -> gspread.Spreadsheet:
         client = gspread.authorize(self.credentials)
         print("-----" + "CREATING GOOGLE SHEET FILE" + "-----")
-        sheet_object = client.create(title=self.name, folder_id='1IXCU-4F4kObBHIRj0Y7-oGGX0yedlmWw')
+        sheet_object = client.create(title=self.name, folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
         sheet_object.fetch_sheet_metadata
         return sheet_object
 
