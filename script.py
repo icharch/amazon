@@ -3,114 +3,25 @@ from datetime import date, timedelta
 from typing import List
 from google.oauth2.credentials import Credentials
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from sp_api.api import Orders
-from sp_api.base import SellingApiException, Marketplaces
+from sp_api.base import SellingApiException
 import time
 import const
-from google_drive import GoogleDriveManager
 from google.auth.transport.requests import Request
 import os.path
+from google_sheets import GoogleSheets
+from amazon_order import AmazonOrder
+from country_config import configs, CountryConfig
 
-
-
-class GoogleSheets:
-    def __init__(self, credentials):
-        self.credentials = credentials
-        self.sheet_object = self._get_sheet_object()
-
-    def _get_sheet_object(self) -> gspread.Spreadsheet:
-        client = gspread.authorize(self.credentials)
-        print("-----" + "CREATING GOOGLE SHEET FILE" + "-----")
-        sheet_object = client.create(title= "YY_amazon_orders_" + str((date.today() - timedelta(days=1)).strftime('%Y-%m-%d')), folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
-        return sheet_object
-
-    def add_worksheet(self, name: str, index: int) -> gspread.Worksheet:
-        worksheet = self.sheet_object.add_worksheet(title=name, rows=400, cols=10, index=index)
-        print("-----" + "Adding worksheet named " + name + "-----")
-        self.write_header_if_doesnt_exist(worksheet=worksheet, columns=HEADER)
-        return worksheet
-    
-    def write_header_if_doesnt_exist(self, worksheet, columns: List[str]) -> None:
-        data = worksheet.get_all_values()
-        if not data:
-            worksheet.insert_row(columns)
-
-    def append_rows(self, rows: List[List]) -> None:
-        last_row_number = len(self.sheet_object.col_values(1)) + 1
-        self.sheet_object.insert_rows(rows, last_row_number)
-
-
-@dataclass
-class AmazonOrder:
-    order_id: str
-    purchase_date: str
-    order_status: str
-    sku: str
-    asin: str
-    quantity_ordered: int
-    currency_code: str
-    sales_channel: str
-    fulfillment_channel: str
-    item_price: str
-    item_tax: str
-    shipping_price: str
-    shipping_tax: str
-    promotion_discount: str
-    shipping_discount: str
-    country_code: str
-    is_business_order: bool
-    is_gift: bool
-    gift_wrap_price: str
-    gift_wrap_tax: str
-    
 SCOPES = [
     'https://www.googleapis.com/auth/drive', 
 ]
 
-HEADER = [
-"AmazonOrderId",
-"PurchaseDate",
-"OrderStatus",
-"sku", 
-"asin",
-"QuantityOrdered",
-"CurrencyCode",
-"SalesChannel",
-"FulfillmentChannel",
-"ItemPrice",
-"ItemTax",
-"ShippingPrice",
-"ShippingTax",
-"PromotionDiscount",
-"ShippingDiscount",
-"ShippingAddress",
-"IsBusinessOrder",
-"IsGift",
-"GiftWrapPrice",
-"GiftWrapTax"
-]
-
-@dataclass
-class CountryConfig:
-    marketplace: Marketplaces
-    google_worksheet_name: str
-    refresh_token: str
-
-configs = [
-    CountryConfig(Marketplaces.BE, const.GOOGLE_WORKSHEET_NAME_BE, const.REFRESH_TOKEN_BE),
-    CountryConfig(Marketplaces.SE, const.GOOGLE_WORKSHEET_NAME_SE, const.REFRESH_TOKEN_SE),
-    CountryConfig(Marketplaces.NL, const.GOOGLE_WORKSHEET_NAME_NL, const.REFRESH_TOKEN_NL),
-    CountryConfig(Marketplaces.ES, const.GOOGLE_WORKSHEET_NAME_ES, const.REFRESH_TOKEN_ES), 
-    CountryConfig(Marketplaces.IT, const.GOOGLE_WORKSHEET_NAME_IT, const.REFRESH_TOKEN_IT),
-    CountryConfig(Marketplaces.FR, const.GOOGLE_WORKSHEET_NAME_FR, const.REFRESH_TOKEN_FR), 
-    CountryConfig(Marketplaces.DE, const.GOOGLE_WORKSHEET_NAME_DE, const.REFRESH_TOKEN_DE), 
-    CountryConfig(Marketplaces.UK, const.GOOGLE_WORKSHEET_NAME_UK, const.REFRESH_TOKEN_UK)
-    ]
-
 class AmazonScript:
-    def __init__(self,credentials):
+    def __init__(self, credentials, created_after: date, created_before: date):
         self.credentials = credentials
+        self.created_after = created_after
+        self.created_before = created_before
         self.fetch_orders()
 
     def get_orders_data_and_append_to_worksheet(self, worksheet: gspread.Worksheet, config: CountryConfig) -> None:
@@ -123,14 +34,29 @@ class AmazonScript:
             print(f"Error: {e}")
 
     def fetch_orders(self):
-        google_sheets = GoogleSheets(self.credentials)
+        client = gspread.authorize(self.credentials)
+
+        files = client.list_spreadsheet_files(title= ("YY_amazon_orders_" + self.created_after.strftime("%Y-%m-%d")), folder_id='1grQM2tnWM1ip7AgEQ7wEEZZushqIMLId')
+
+        google_sheets = GoogleSheets(self.credentials, name=("YY_amazon_orders_" + self.created_after.strftime("%Y-%m-%d")))
         index = 0
         for config in configs:
-            print("-----" + "Started fetching orders for: " + str(config.marketplace) + "-----")
-            worksheet = google_sheets.add_worksheet(name=config.google_worksheet_name, index=index)
-            self.get_orders_data_and_append_to_worksheet(worksheet=worksheet, config=config)
+            try:
+                print("-----" + "Started fetching orders for: " + str(config.marketplace) + "-----")
+                order_data = self.get_orders_from_sp_api(config=config)
+                ready_rows = [list(asdict(row).values()) for row in order_data]
+                worksheet = google_sheets.add_worksheet(name=config.google_worksheet_name, index=index)
+                last_row_number = len(worksheet.col_values(1)) + 1
+                worksheet.insert_rows(ready_rows, last_row_number)
+            except SellingApiException as e:
+                print(f"Error: {e}")
+                return e
             index+=index
+        if len(files) > 0:
+            for file in files:
+                client.del_spreadsheet(file.get("id"))
 
+    # returns list of amazon orders for given country represented as CountryConfig.
     def get_orders_from_sp_api(self, config: CountryConfig) -> List[AmazonOrder]:
         client_config = dict(
             refresh_token=config.refresh_token,
@@ -143,7 +69,7 @@ class AmazonScript:
 
         res = Orders(credentials=client_config, marketplace=config.marketplace)
         print("Fetching orders from " + str(config.marketplace))
-        orders = res.get_orders(CreatedAfter=date.today()-timedelta(days=1), CreatedBefore=date.today().isoformat()).payload.get("Orders", '')
+        orders = res.get_orders(CreatedAfter=self.created_after, CreatedBefore=self.created_before).payload.get("Orders", '')
         print("Fetched " + str(len(orders)) + " orders.") 
         order_items_to_sheet = []
         for order in orders:
@@ -267,9 +193,8 @@ if __name__ == '__main__':
     if credentials == None:
         print("Error with authorization occured.")
         exit()
-
-
-    # manager = GoogleDriveManager(creds=credentials)
-    # spreadsheetId = manager.create_spreadsheet()
-    AmazonScript(credentials = credentials)
+    # get yesterdays's orders 
+    AmazonScript(credentials = credentials,created_after=date.today()-timedelta(days=1),created_before=date.today())
+    # update last week's orders 
+    AmazonScript(credentials = credentials,created_after=date.today()-timedelta(days=7),created_before=date.today()-timedelta(days=6))
     print("Done.")
